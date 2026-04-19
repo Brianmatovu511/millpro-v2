@@ -157,7 +157,7 @@ router.post('/login', async (req, res) => {
 
 // Current user
 router.get('/me', authenticate, (req, res) => {
-  const { passwordHash, ...u } = req.user;
+  const { passwordHash: _pw, ...u } = req.user;
   res.json({ ...u, companyName: req.user.company.name, companyCurrency: req.user.company.currency, companyLogo: req.user.company.logo, companyCode: req.user.company.code });
 });
 

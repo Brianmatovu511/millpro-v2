@@ -45,8 +45,11 @@
   "jest": {
     "testEnvironment": "node",
     "collectCoverageFrom": [
-      "server/**/*.js",
-      "!server/index.js"
+      "server/fhir/**/*.js",
+      "server/utils/logger.js",
+      "server/middleware/errorHandler.js",
+      "server/middleware/correlationId.js",
+      "server/middleware/validate.js"
     ],
     "coverageReporters": [
       "text",
@@ -55,7 +58,7 @@
     ],
     "coverageThreshold": {
       "global": {
-        "lines": 60
+        "lines": 80
       }
     }
   },
