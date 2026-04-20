@@ -207,6 +207,24 @@ This project was built as part of the Innovation and Complexity Management (INCO
 
 ---
 
+## Optimization Dimensions
+
+The system is designed and evaluated against nine quality dimensions used throughout the INCO course.
+
+| Dimension | Design Decision | Where |
+|-----------|----------------|-------|
+| **Performance** | Multi-stage Docker build keeps the production image lean; `.dockerignore` excludes tests, docs, and dev tooling from the build context; DB indexes on `companyId`, `date`, and `createdAt` on the highest-traffic tables | `Dockerfile`, `.dockerignore`, `prisma/schema.prisma` |
+| **Development Time** | Husky pre-commit hooks catch errors before push; GitHub Actions CI catches regressions automatically; Vite proxy lets frontend call the backend in dev without config changes; one-command Docker Compose start | `.husky/`, `.github/workflows/ci.yml`, `client/vite.config.js`, `docker-compose.yml` |
+| **Cost** | `.dockerignore` reduces Docker build context by ~60% (excludes `node_modules`, `coverage`, docs); multi-stage build discards the builder layer; Prisma graceful disconnect avoids leaked idle connections | `.dockerignore`, `Dockerfile`, `server/db.js` |
+| **Accuracy** | express-validator enforces type, format, and range on every API input; FHIR R4 schema validation rejects malformed Observation resources before they reach the DB; Prisma's type-safe queries eliminate SQL typos | `server/middleware/validate.js`, `server/fhir/validator.js` |
+| **Usability** | "Try Live Demo" button on the landing page links directly to `/demo.html` — one click, no login; demo page shows real DB results immediately; role-based UI hides controls the current user cannot use | `client/src/App.jsx`, `client/public/demo.html` |
+| **Security** | Helmet sets 12 HTTP security headers; bcrypt (cost 10) hashes all passwords; JWT with short expiry; express-rate-limit blocks brute-force on auth endpoints; `.dockerignore` prevents `.env` files entering the image | `server/index.js`, `server/middleware/auth.js`, `.dockerignore` |
+| **Scalability** | DB indexes on all multi-tenant filter columns (`companyId`); Prisma connection pool managed by the driver; Docker Compose `healthcheck` prevents the app starting before Postgres is ready; stateless JWT means any number of app replicas can run behind a load balancer | `prisma/schema.prisma`, `server/db.js`, `docker-compose.yml` |
+| **Extensibility / Maintainability** | One file per resource in `server/routes/`; FHIR mapper and validator are isolated modules with no business-logic coupling; centralized `AppError` class means new error types need one line; Jest coverage gate (80%) enforced in CI prevents coverage regression | `server/routes/`, `server/fhir/`, `server/middleware/errorHandler.js` |
+| **Traceability** | Every HTTP request gets a UUID correlation ID (returned as `x-correlation-id` header); Winston logs method, path, status, latency, and correlationId on every response; audit log table records every user action with userId, entity, and IP; FHIR Observation IDs link sensor records back to the originating request | `server/middleware/correlationId.js`, `server/utils/logger.js`, `prisma/schema.prisma` (AuditLog) |
+
+---
+
 ## How Our Team Collaborates with AI Agents
 
 ### Team Composition

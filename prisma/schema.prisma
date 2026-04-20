@@ -61,6 +61,7 @@ model User {
   pendingReviews   PendingAction[] @relation("PendingReviewer")
 
   @@unique([email, companyId])
+  @@index([companyId])
   @@map("users")
 }
 
@@ -136,6 +137,8 @@ model WorkLog {
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   taskType TaskType @relation(fields: [taskTypeId], references: [id], onDelete: Cascade)
 
+  @@index([companyId, date])
+  @@index([employeeId])
   @@map("work_logs")
 }
 
@@ -382,6 +385,7 @@ model MillActivityLog {
   notes       String?
   createdAt   DateTime @default(now()) @map("created_at")
 
+  @@index([createdAt])
   @@map("mill_activity_logs")
 }
 
@@ -402,5 +406,6 @@ model AuditLog {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  @@index([companyId, createdAt])
   @@map("audit_logs")
 }
