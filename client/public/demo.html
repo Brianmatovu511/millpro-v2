@@ -3,89 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MillPro — Sensor Demo</title>
+  <title>MillPro — Production Demo</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      background: #f0f4f8;
+      background: #F5F1EA;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 24px;
-      color: #1a202c;
+      color: #151A15;
     }
     .card {
       background: #fff;
       border-radius: 20px;
       padding: 48px 40px;
       box-shadow: 0 4px 24px rgba(0,0,0,.10);
-      max-width: 460px;
+      max-width: 500px;
       width: 100%;
       text-align: center;
     }
-    .pulse {
+    .icon {
       width: 72px; height: 72px;
-      background: #fee2e2;
+      background: #FDF3DC;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 24px;
-      font-size: 32px;
+      font-size: 34px;
     }
-    h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
-    p  { color: #718096; font-size: 14px; line-height: 1.6; margin-bottom: 32px; }
+    h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: #0C150C; }
+    p  { color: #5E6E5E; font-size: 14px; line-height: 1.6; margin-bottom: 32px; }
     button {
       background: #BF8C1A;
       color: #fff;
       border: none;
       border-radius: 12px;
       padding: 18px 40px;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       width: 100%;
       transition: background .2s, transform .1s;
-      letter-spacing: .3px;
     }
     button:hover  { background: #a67715; }
     button:active { transform: scale(.97); }
     button:disabled { background: #cbd5e0; cursor: not-allowed; }
     .status {
-      margin-top: 20px;
+      margin-top: 18px;
       font-size: 13px;
       min-height: 20px;
-      color: #38a169;
+      color: #247529;
       font-weight: 600;
     }
-    .status.error { color: #e53e3e; }
+    .status.error { color: #B71C1C; }
     table {
       width: 100%; border-collapse: collapse;
-      margin-top: 28px; font-size: 13px;
+      margin-top: 28px; font-size: 13px; text-align: left;
     }
-    th { color: #718096; font-weight: 600; padding: 6px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-    td { padding: 7px 10px; border-bottom: 1px solid #f0f4f8; }
-    td:last-child { text-align: right; color: #e53e3e; font-weight: 700; }
-    .badge {
-      display: inline-block; background: #fef3c7; color: #92400e;
+    th {
+      color: #5E6E5E; font-weight: 700; padding: 8px 10px;
+      border-bottom: 2px solid #DED8CC;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    td { padding: 8px 10px; border-bottom: 1px solid #F5F1EA; }
+    .pill {
+      display: inline-block; background: #FDF3DC; color: #92400e;
       border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700;
     }
+    .eff { color: #247529; font-weight: 700; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="pulse">❤️</div>
-    <h1>Sensor Reading Demo</h1>
+    <div class="icon">🌽</div>
+    <h1>MillPro — Production Log Demo</h1>
     <p>
-      Press the button to simulate a heart-rate sensor reading.<br/>
-      The value is written to the database and shown below — no login required.
+      Press the button to log a simulated milling production run.<br/>
+      The record is written to PostgreSQL via the backend — no login required.
     </p>
-    <button id="btn" onclick="record()">Record Sensor Reading</button>
+    <button id="btn" onclick="logActivity()">Log Production Activity</button>
     <div class="status" id="status"></div>
 
     <table id="tbl" style="display:none">
-      <thead><tr><th>#</th><th>Time</th><th>BPM</th></tr></thead>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Time</th>
+          <th>Maize (kg)</th>
+          <th>Flour (kg)</th>
+          <th>Efficiency</th>
+        </tr>
+      </thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
@@ -93,46 +104,49 @@
   <script>
     const API = '/api/demo';
 
-    async function record() {
-      const btn = document.getElementById('btn');
+    async function logActivity() {
+      const btn    = document.getElementById('btn');
       const status = document.getElementById('status');
       btn.disabled = true;
-      btn.textContent = 'Recording…';
+      btn.textContent = 'Logging…';
       status.className = 'status';
       status.textContent = '';
       try {
-        const res = await fetch(`${API}/reading`, { method: 'POST' });
+        const res = await fetch(`${API}/activity`, { method: 'POST' });
         if (!res.ok) throw new Error(`Server error ${res.status}`);
-        const { reading } = await res.json();
-        status.textContent = `Saved! Heart rate: ${reading.value} bpm (id: ${reading.id.slice(0,8)}…)`;
-        await loadReadings();
+        const { log } = await res.json();
+        status.textContent =
+          `Saved! Maize: ${log.maizeKg} kg → Flour: ${log.flourKg} kg (${log.efficiency}% yield)`;
+        await loadLogs();
       } catch (e) {
         status.className = 'status error';
         status.textContent = `Error: ${e.message}`;
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Record Sensor Reading';
+        btn.textContent = 'Log Production Activity';
       }
     }
 
-    async function loadReadings() {
+    async function loadLogs() {
       try {
-        const res = await fetch(`${API}/readings`);
-        const { readings } = await res.json();
-        if (!readings.length) return;
+        const res  = await fetch(`${API}/activities`);
+        const { logs } = await res.json();
+        if (!logs.length) return;
         const tbody = document.getElementById('tbody');
-        tbody.innerHTML = readings.map((r, i) =>
+        tbody.innerHTML = logs.map((l, i) =>
           `<tr>
-            <td><span class="badge">${i + 1}</span></td>
-            <td>${new Date(r.createdAt).toLocaleTimeString()}</td>
-            <td>${r.value}</td>
+            <td><span class="pill">${i + 1}</span></td>
+            <td>${new Date(l.createdAt).toLocaleTimeString()}</td>
+            <td>${l.maizeKg}</td>
+            <td>${l.flourKg}</td>
+            <td class="eff">${l.efficiency}%</td>
           </tr>`
         ).join('');
         document.getElementById('tbl').style.display = 'table';
       } catch (_) {}
     }
 
-    loadReadings();
+    loadLogs();
   </script>
 </body>
 </html>

@@ -85,7 +85,7 @@ A self-contained demo page that requires no login and proves the full stack work
 http://localhost:5000/demo.html
 ```
 
-Press **Record Sensor Reading** — a value is written to the PostgreSQL database via the backend and the last 10 entries are shown immediately. This satisfies the INCO "one button → backend → database" verification requirement.
+Press **Log Production Activity** — a simulated milling run (maize in, flour out, efficiency %) is written to the PostgreSQL database via the backend, and the last 10 entries appear instantly in the table. This satisfies the INCO "one button → backend → database" verification requirement.
 
 ---
 

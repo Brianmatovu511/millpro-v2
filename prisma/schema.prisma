@@ -371,17 +371,18 @@ model PendingAction {
 }
 
 // ═══════════════════════════════════
-// SENSOR READINGS (INCO Demo — public)
+// MILL ACTIVITY LOG (INCO Demo — public)
 // ═══════════════════════════════════
-model SensorReading {
-  id        String   @id @default(uuid())
-  type      String   @default("heartRate")
-  value     Float
-  unit      String   @default("bpm")
-  label     String?
-  createdAt DateTime @default(now()) @map("created_at")
+model MillActivityLog {
+  id          String   @id @default(uuid())
+  activity    String   @default("production_check")
+  flourKg     Float
+  maizeKg     Float
+  efficiency  Float
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  @@map("sensor_readings")
+  @@map("mill_activity_logs")
 }
 
 // ═══════════════════════════════════
