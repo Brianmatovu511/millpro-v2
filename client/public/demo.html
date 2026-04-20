@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MillPro — Sensor Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #1a202c;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 48px 40px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+    }
+    .pulse {
+      width: 72px; height: 72px;
+      background: #fee2e2;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 32px;
+    }
+    h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+    p  { color: #718096; font-size: 14px; line-height: 1.6; margin-bottom: 32px; }
+    button {
+      background: #BF8C1A;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 18px 40px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: background .2s, transform .1s;
+      letter-spacing: .3px;
+    }
+    button:hover  { background: #a67715; }
+    button:active { transform: scale(.97); }
+    button:disabled { background: #cbd5e0; cursor: not-allowed; }
+    .status {
+      margin-top: 20px;
+      font-size: 13px;
+      min-height: 20px;
+      color: #38a169;
+      font-weight: 600;
+    }
+    .status.error { color: #e53e3e; }
+    table {
+      width: 100%; border-collapse: collapse;
+      margin-top: 28px; font-size: 13px;
+    }
+    th { color: #718096; font-weight: 600; padding: 6px 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 7px 10px; border-bottom: 1px solid #f0f4f8; }
+    td:last-child { text-align: right; color: #e53e3e; font-weight: 700; }
+    .badge {
+      display: inline-block; background: #fef3c7; color: #92400e;
+      border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="pulse">❤️</div>
+    <h1>Sensor Reading Demo</h1>
+    <p>
+      Press the button to simulate a heart-rate sensor reading.<br/>
+      The value is written to the database and shown below — no login required.
+    </p>
+    <button id="btn" onclick="record()">Record Sensor Reading</button>
+    <div class="status" id="status"></div>
+
+    <table id="tbl" style="display:none">
+      <thead><tr><th>#</th><th>Time</th><th>BPM</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API = '/api/demo';
+
+    async function record() {
+      const btn = document.getElementById('btn');
+      const status = document.getElementById('status');
+      btn.disabled = true;
+      btn.textContent = 'Recording…';
+      status.className = 'status';
+      status.textContent = '';
+      try {
+        const res = await fetch(`${API}/reading`, { method: 'POST' });
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+        const { reading } = await res.json();
+        status.textContent = `Saved! Heart rate: ${reading.value} bpm (id: ${reading.id.slice(0,8)}…)`;
+        await loadReadings();
+      } catch (e) {
+        status.className = 'status error';
+        status.textContent = `Error: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Record Sensor Reading';
+      }
+    }
+
+    async function loadReadings() {
+      try {
+        const res = await fetch(`${API}/readings`);
+        const { readings } = await res.json();
+        if (!readings.length) return;
+        const tbody = document.getElementById('tbody');
+        tbody.innerHTML = readings.map((r, i) =>
+          `<tr>
+            <td><span class="badge">${i + 1}</span></td>
+            <td>${new Date(r.createdAt).toLocaleTimeString()}</td>
+            <td>${r.value}</td>
+          </tr>`
+        ).join('');
+        document.getElementById('tbl').style.display = 'table';
+      } catch (_) {}
+    }
+
+    loadReadings();
+  </script>
+</body>
+</html>

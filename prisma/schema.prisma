@@ -371,6 +371,20 @@ model PendingAction {
 }
 
 // ═══════════════════════════════════
+// SENSOR READINGS (INCO Demo — public)
+// ═══════════════════════════════════
+model SensorReading {
+  id        String   @id @default(uuid())
+  type      String   @default("heartRate")
+  value     Float
+  unit      String   @default("bpm")
+  label     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("sensor_readings")
+}
+
+// ═══════════════════════════════════
 // AUDIT LOG
 // ═══════════════════════════════════
 model AuditLog {

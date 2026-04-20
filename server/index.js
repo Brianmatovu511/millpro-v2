@@ -71,6 +71,7 @@ app.use('/api/inventory',        require('./routes/inventory'));
 app.use('/api/reports',          require('./routes/reports'));
 app.use('/api/pending',          require('./routes/pending'));
 app.use('/api/fhir',             require('./routes/fhir'));
+app.use('/api/demo',             require('./routes/demo'));
 
 // Serve React in production
 if (process.env.NODE_ENV === 'production') {
