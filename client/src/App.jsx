@@ -57,11 +57,41 @@ const Toast = ({msg,type}) => { if(!msg)return null; return <div style={{positio
 // ══════════════════════════════════════════
 function MarketingPage({ onSignIn, onRegister }) {
   const [scrolled, setScrolled] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoResult, setDemoResult] = useState(null);
+  const [demoLogs, setDemoLogs]     = useState([]);
+  const [demoError, setDemoError]   = useState('');
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const loadDemoLogs = async () => {
+    try {
+      const r = await fetch('/api/demo/activities');
+      const { logs } = await r.json();
+      setDemoLogs(logs || []);
+    } catch (_) {}
+  };
+
+  const logDemoActivity = async () => {
+    setDemoLoading(true); setDemoError(''); setDemoResult(null);
+    try {
+      const r = await fetch('/api/demo/activity', { method: 'POST' });
+      if (!r.ok) throw new Error(`Server error ${r.status}`);
+      const { log } = await r.json();
+      setDemoResult(log);
+      await loadDemoLogs();
+    } catch (e) {
+      setDemoError(e.message);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
+  useEffect(() => { loadDemoLogs(); }, []);
 
   const GRN = '#1A7A20'; const GOLD = '#C9961E'; const DARK = '#07100A'; const DARK2 = '#0F1C12';
   const MID = '#152218'; const CREAM = '#FDF8F0'; const LGOLD = '#FDF3DC';
@@ -192,7 +222,7 @@ function MarketingPage({ onSignIn, onRegister }) {
         <div style={{display:'flex',gap:14,justifyContent:'center',flexWrap:'wrap',marginBottom:64}}>
           <button onClick={onRegister} style={{padding:'15px 34px',borderRadius:12,background:`linear-gradient(135deg,${GRN},#2E8B35)`,color:'#fff',fontSize:15,fontWeight:700,border:'none',cursor:'pointer',boxShadow:`0 6px 28px ${GRN}55`,transition:'all .25s'}} onMouseEnter={e=>e.target.style.transform='translateY(-2px)'} onMouseLeave={e=>e.target.style.transform=''}>Start Free Today →</button>
           <button onClick={onSignIn} style={{padding:'15px 34px',borderRadius:12,background:'rgba(255,255,255,0.07)',color:'#fff',fontSize:15,fontWeight:600,border:'1.5px solid rgba(255,255,255,0.2)',cursor:'pointer',transition:'all .25s'}} onMouseEnter={e=>e.target.style.background='rgba(255,255,255,0.12)'} onMouseLeave={e=>e.target.style.background='rgba(255,255,255,0.07)'}>Sign In to Your Account</button>
-          <a href="/demo.html" style={{padding:'15px 34px',borderRadius:12,background:`rgba(201,150,30,0.15)`,color:GOLD,fontSize:15,fontWeight:600,border:`1.5px solid rgba(201,150,30,0.4)`,cursor:'pointer',transition:'all .25s',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:8}} onMouseEnter={e=>e.currentTarget.style.background='rgba(201,150,30,0.25)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(201,150,30,0.15)'}>🌽 Try Live Demo</a>
+          <a href="#demo" style={{padding:'15px 34px',borderRadius:12,background:`rgba(201,150,30,0.15)`,color:GOLD,fontSize:15,fontWeight:600,border:`1.5px solid rgba(201,150,30,0.4)`,cursor:'pointer',transition:'all .25s',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:8}} onMouseEnter={e=>e.currentTarget.style.background='rgba(201,150,30,0.25)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(201,150,30,0.15)'}>🌽 Try Live Demo</a>
         </div>
         {/* Stats bar */}
         <div style={{display:'flex',gap:0,justifyContent:'center',flexWrap:'wrap',borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:32}}>
@@ -255,6 +285,51 @@ function MarketingPage({ onSignIn, onRegister }) {
             <span style={{fontSize:13,color:'#5E6E5E',lineHeight:1.5}}>{p}</span>
           </div>)}
         </div>)}
+      </div>
+    </Section>
+
+    {/* ── LIVE DEMO ── */}
+    <Section id="demo" bg={DARK2} style={{padding:'90px 5%'}}>
+      <SectionTitle tag="See It Work" title="One Button. Real Database." sub="No login. No setup. Press the button and watch a production record appear in the database instantly." light/>
+      <div style={{maxWidth:600,margin:'0 auto',textAlign:'center'}}>
+        <button
+          onClick={logDemoActivity}
+          disabled={demoLoading}
+          style={{padding:'20px 56px',borderRadius:14,background:demoLoading?'#555':`linear-gradient(135deg,${GOLD},#E8B84B)`,color:'#000',fontSize:17,fontWeight:800,border:'none',cursor:demoLoading?'not-allowed':'pointer',boxShadow:`0 8px 32px ${GOLD}44`,transition:'all .25s',letterSpacing:.3,width:'100%',maxWidth:380}}>
+          {demoLoading ? 'Logging…' : '🌽 Log Production Activity'}
+        </button>
+
+        {demoError && (
+          <div style={{marginTop:16,padding:'12px 20px',borderRadius:10,background:'rgba(183,28,28,0.15)',border:'1px solid rgba(183,28,28,0.3)',color:'#ff8a80',fontSize:13,fontWeight:600}}>
+            {demoError}
+          </div>
+        )}
+
+        {demoResult && (
+          <div style={{marginTop:16,padding:'16px 20px',borderRadius:10,background:'rgba(36,117,41,0.15)',border:'1px solid rgba(36,117,41,0.3)',color:'#81c784',fontSize:14,fontWeight:600}}>
+            Saved to DB — Maize: <strong>{demoResult.maizeKg} kg</strong> → Flour: <strong>{demoResult.flourKg} kg</strong> · Efficiency: <strong>{demoResult.efficiency}%</strong>
+          </div>
+        )}
+
+        {demoLogs.length > 0 && (
+          <div style={{marginTop:28,borderRadius:12,overflow:'hidden',border:'1px solid rgba(255,255,255,0.08)'}}>
+            <div style={{background:'rgba(255,255,255,0.05)',padding:'10px 16px',fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:.8,display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',textAlign:'left'}}>
+              <span>#</span><span>Maize (kg)</span><span>Flour (kg)</span><span>Efficiency</span>
+            </div>
+            {demoLogs.slice(0,5).map((l,i)=>(
+              <div key={l.id} style={{padding:'10px 16px',fontSize:13,display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',textAlign:'left',borderTop:'1px solid rgba(255,255,255,0.06)',background:i%2===0?'rgba(255,255,255,0.02)':'transparent',color:'rgba(255,255,255,0.75)'}}>
+                <span style={{color:GOLD,fontWeight:700}}>{i+1}</span>
+                <span>{l.maizeKg}</span>
+                <span>{l.flourKg}</span>
+                <span style={{color:'#81c784',fontWeight:600}}>{l.efficiency}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p style={{marginTop:20,fontSize:12,color:'rgba(255,255,255,0.25)'}}>
+          Each press writes a real record to PostgreSQL via the Express backend — no mock data.
+        </p>
       </div>
     </Section>
 
